@@ -29,6 +29,28 @@ default:
 EOF
 fi
 
+if [ ! -f /etc/init/celery.conf ] ; then
+cat <<EOF > /etc/init/celery.conf
+start on runlevel [2345]
+stop on runlevel [06]
+
+env DJANGO_SETTINGS_MODULE=vaas.settings.local
+
+script
+    exec su -s /bin/sh -c 'exec "$0" "$@"' vagrant -- /home/vagrant/venv/bin/python /home/vagrant/venv/bin/celery --workdir=/home/vagrant/vaas/vaas-app/src -A vaas.settings worker -l info
+end script
+
+respawn
+EOF
+fi
+
+job_status=$(status celery)
+if [[ ${job_status} = *running* ]]; then
+    sudo restart celery
+else
+    sudo start celery
+fi
+
 if [ ! -f /tmp/db.sqlite3 ] ; then
   $VAAS_SRC_HOME/manage.py syncdb --noinput
   $VAAS_SRC_HOME/manage.py loaddata $VAAS_SRC_HOME/vaas/resources/data.yaml
