@@ -65,7 +65,7 @@ class VclRefreshMiddleware(object):
         if len(clusters) > 0:
             start = time.time()
             try:
-                VarnishCluster().load_vcl(datetime.datetime.now().isoformat(), clusters)
+                VarnishCluster().load_vcl(datetime.datetime.now(), clusters)
             except Exception as e:
                 logging.info("Error while reloading cluster: %s (%s)" % (e, type(response)))
                 if 'tastypie' in str(type(response)):

@@ -5,10 +5,12 @@ import time
 
 from concurrent.futures import ThreadPoolExecutor
 
+from celery.contrib.methods import task
+
 from django.conf import settings
 
 from vaas.api.client import VarnishApi
-from vaas.cluster.models import VarnishServer
+from vaas.cluster.models import VarnishServer, LogicalCluster
 from vaas.vcl.loader import VclLoader, VclStatus
 from vaas.vcl.renderer import VclRenderer, VclRendererInput
 
@@ -36,18 +38,23 @@ class VarnishCluster(object):
     def get_vcl_content(self, varnish_server_pk):
         return VarnishApiProvider().get_api(VarnishServer.objects.get(pk=varnish_server_pk)).vcl_content_active()
 
-    def load_vcl(self, vcl_name, clusters):
+    @task()
+    def load_vcl(self, vcl_timestamp, cluster_ids):
+        clusters = LogicalCluster.objects.filter(pk__in=cluster_ids, reload_timestamp__lte=vcl_timestamp)
         servers = ServerExtractor().extract_servers_by_clusters(clusters)
-        vcl_list = ParallelRenderer(self.max_workers).render_vcl_for_servers(vcl_name, servers)
+        vcl_list = ParallelRenderer(self.max_workers).render_vcl_for_servers(vcl_timestamp, servers)
         parallel_loader = make_parallel_loader(self.max_workers)
 
         try:
             loaded_vcl_list = parallel_loader.load_vcl_list(vcl_list)
+            for cluster in clusters:
+                cluster.reload_timestamp = vcl_timestamp
+                cluster.save()
         except VclLoadException:
             self.logger.error("Loading error - rendered vcl-s not used")
             raise
         else:
-            return parallel_loader.use_vcl_list(vcl_name, loaded_vcl_list)
+            return parallel_loader.use_vcl_list(vcl_timestamp, loaded_vcl_list)
 
 
 class VarnishApiProvider(object):

@@ -11,6 +11,7 @@ class LogicalCluster(models.Model):
     """Model representing a cluster of varnish servers"""
     name = models.CharField(max_length=20, validators=[validate_slug])
     directors = fields.ToManyField('vaas.manager.api.DirectorResource', 'directors')
+    reload_timestamp = models.DateTimeField(null=True)
 
     def __unicode__(self):
         return self.name
