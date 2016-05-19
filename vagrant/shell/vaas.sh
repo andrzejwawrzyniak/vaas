@@ -30,7 +30,7 @@ EOF
 fi
 
 if [ ! -f /etc/init/celery.conf ] ; then
-cat <<EOF > /etc/init/celery.conf
+sudo tee /etc/init/celery.conf > /dev/null <<EOF
 start on runlevel [2345]
 stop on runlevel [06]
 
