@@ -7,6 +7,12 @@ from tastypie.http import HttpApplicationError
 
 from vaas.cluster.cluster import VarnishCluster, VclLoadException
 
+from vaas.settings.celery import app
+
+@app.task()
+def dupa():
+    raise Exception()
+
 
 class VclRefreshState(object):
     # dictionary with requests id to refresh
@@ -70,10 +76,13 @@ class VclRefreshMiddleware(object):
                         [cluster.id for cluster in clusters]
                 )
 
-                if 'respond-async' in request.META['HTTP_PREFER']:
-                    pass
+                if 'respond-async' in request.META.get('HTTP_PREFER', ''):
+                    response.status_code = 202
                 else:
                     result.get()
+
+                    if isinstance(result.result, Exception):
+                        raise result.result
             except Exception as e:
                 logging.info("Error while reloading cluster: %s (%s)" % (e, type(response)))
                 if 'tastypie' in str(type(response)):
