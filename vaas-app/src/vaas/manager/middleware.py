@@ -76,8 +76,9 @@ class VclRefreshMiddleware(object):
                         [cluster.id for cluster in clusters]
                 )
 
-                if 'respond-async' in request.META.get('HTTP_PREFER', ''):
-                    response.status_code = 202
+                if 'tastypie' in str(type(response)):
+                    if 'respond-async' in request.META.get('HTTP_PREFER', ''):
+                        response.status_code = 202
                 else:
                     result.get()
 

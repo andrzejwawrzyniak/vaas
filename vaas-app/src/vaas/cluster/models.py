@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import User
 
+import datetime
 from tastypie import fields
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator, validate_slug
@@ -11,7 +12,10 @@ class LogicalCluster(models.Model):
     """Model representing a cluster of varnish servers"""
     name = models.CharField(max_length=20, validators=[validate_slug])
     directors = fields.ToManyField('vaas.manager.api.DirectorResource', 'directors')
-    reload_timestamp = models.DateTimeField(null=True)
+    reload_timestamp = models.DateTimeField(default=datetime.datetime.now)
+    error_timestamp = models.DateTimeField(default=datetime.datetime.now)
+    last_error_info = models.CharField(max_length=400, null=True)
+
 
     def __unicode__(self):
         return self.name

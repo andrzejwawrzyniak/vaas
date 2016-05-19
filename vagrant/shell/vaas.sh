@@ -36,8 +36,11 @@ stop on runlevel [06]
 
 env DJANGO_SETTINGS_MODULE=vaas.settings.local
 
+setgid vagrant
+setuid vagrant
+
 script
-    exec su -s /bin/sh -c 'exec "$0" "$@"' vagrant -- /home/vagrant/venv/bin/python /home/vagrant/venv/bin/celery --workdir=/home/vagrant/vaas/vaas-app/src -A vaas.settings worker -l info
+    exec /home/vagrant/venv/bin/python /home/vagrant/venv/bin/celery --workdir=/home/vagrant/vaas/vaas-app/src -A vaas.settings worker -l info
 end script
 
 respawn
