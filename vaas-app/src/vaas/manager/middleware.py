@@ -65,7 +65,15 @@ class VclRefreshMiddleware(object):
         if len(clusters) > 0:
             start = time.time()
             try:
-                VarnishCluster().load_vcl(datetime.datetime.now(), clusters)
+                result = VarnishCluster().load_vcl.delay(
+                        datetime.datetime.now(),
+                        [cluster.id for cluster in clusters]
+                )
+
+                if 'respond-async' in request.META['HTTP_PREFER']:
+                    pass
+                else:
+                    result.get()
             except Exception as e:
                 logging.info("Error while reloading cluster: %s (%s)" % (e, type(response)))
                 if 'tastypie' in str(type(response)):

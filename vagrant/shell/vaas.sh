@@ -2,6 +2,10 @@
 
 VAAS_SRC_HOME='/home/vagrant/vaas/vaas-app/src'
 
+# prepare repositories
+sudo apt-get update -y
+sudo apt-get install -y redis-server
+
 sudo ~/venv/bin/docker-compose -f ~/vaas/docker-compose.yml up -d --force-recreate
 
 # Kill the server if it is already running:
