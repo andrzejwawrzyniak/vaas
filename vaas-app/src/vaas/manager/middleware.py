@@ -5,7 +5,7 @@ import logging
 import time
 from tastypie.http import HttpApplicationError
 
-from vaas.cluster.cluster import VarnishCluster, VclLoadException
+from vaas.cluster.cluster import VarnishCluster, VclLoadException, load_vcl_task
 
 
 class VclRefreshState(object):
@@ -65,12 +65,12 @@ class VclRefreshMiddleware(object):
         if len(clusters) > 0:
             start = time.time()
             try:
-                result = VarnishCluster().load_vcl.delay(
+                result = load_vcl_task.delay(
                         datetime.datetime.now(),
                         [cluster.id for cluster in clusters]
                 )
 
-                if 'respond-async' in request.META['HTTP_PREFER']:
+                if 'respond-async' in request.META.get('HTTP_PREFER', ''):
                     pass
                 else:
                     result.get()

@@ -5,7 +5,7 @@ import time
 
 from concurrent.futures import ThreadPoolExecutor
 
-from celery.contrib.methods import task
+from vaas.settings.celery import app
 
 from django.conf import settings
 
@@ -27,6 +27,10 @@ class VclLoadException(Exception):
     pass
 
 
+@app.task(bind=True)
+def load_vcl_task(self, vcl_timestamp, cluster_ids):
+    return VarnishCluster().load_vcl(vcl_timestamp, cluster_ids)
+
 class VarnishCluster(object):
 
     def __init__(self, timeout=1, max_workers=30):
@@ -38,11 +42,10 @@ class VarnishCluster(object):
     def get_vcl_content(self, varnish_server_pk):
         return VarnishApiProvider().get_api(VarnishServer.objects.get(pk=varnish_server_pk)).vcl_content_active()
 
-    @task()
     def load_vcl(self, vcl_timestamp, cluster_ids):
         clusters = LogicalCluster.objects.filter(pk__in=cluster_ids, reload_timestamp__lte=vcl_timestamp)
         servers = ServerExtractor().extract_servers_by_clusters(clusters)
-        vcl_list = ParallelRenderer(self.max_workers).render_vcl_for_servers(vcl_timestamp, servers)
+        vcl_list = ParallelRenderer(self.max_workers).render_vcl_for_servers(vcl_timestamp.isoformat(), servers)
         parallel_loader = make_parallel_loader(self.max_workers)
 
         try:
