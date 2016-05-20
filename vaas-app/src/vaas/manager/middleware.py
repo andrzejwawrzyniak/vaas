@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+from django.utils import timezone
 import logging
 import time
 from tastypie.http import HttpApplicationError
 
-from vaas.cluster.cluster import VarnishCluster, VclLoadException, load_vcl_task
-
-from vaas.settings.celery import app
-
-@app.task()
-def dupa():
-    raise Exception()
+from vaas.cluster.cluster import load_vcl_task
 
 
 class VclRefreshState(object):
@@ -72,8 +66,8 @@ class VclRefreshMiddleware(object):
             start = time.time()
             try:
                 result = load_vcl_task.delay(
-                        datetime.datetime.now(),
-                        [cluster.id for cluster in clusters]
+                    timezone.now(),
+                    [cluster.id for cluster in clusters]
                 )
 
                 if 'tastypie' in str(type(response)):

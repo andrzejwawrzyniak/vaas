@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
+from django.utils import timezone
 from mock import patch, call, Mock
 from nose.tools import assert_true, assert_false, assert_equals, assert_list_equal, raises
 from django.test import TestCase
@@ -206,7 +206,7 @@ class PartialParallelLoaderTest(TestCase):
 class VarnishClusterTest(TestCase):
 
     def test_should_load_and_use_only_loaded_vcls(self):
-        start_processing_time = datetime.now()
+        start_processing_time = timezone.now()
         vcl = Vcl('Test-content', name='test')
 
         loader_mock = Mock()
@@ -236,7 +236,7 @@ class VarnishClusterTest(TestCase):
                 with patch.object(ParallelLoader, 'use_vcl_list', return_value=False) as use_vcl_mock:
                     varnish_cluster = VarnishCluster()
                     with self.assertRaises(VclLoadException):
-                        varnish_cluster.load_vcl(datetime.now(), [])
+                        varnish_cluster.load_vcl(timezone.now(), [])
                     """
                     Here we check if 'use' command is NOT sent to servers
                     """

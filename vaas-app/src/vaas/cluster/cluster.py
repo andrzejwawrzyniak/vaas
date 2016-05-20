@@ -3,7 +3,7 @@
 import logging
 import time
 
-import datetime
+from django.utils import timezone
 from concurrent.futures import ThreadPoolExecutor
 
 from vaas.settings.celery import app
@@ -30,9 +30,10 @@ class VclLoadException(Exception):
 
 @app.task(bind=True)
 def load_vcl_task(self, emmit_time, cluster_ids):
-    start_processing_time = datetime.datetime.now()
+    start_processing_time = timezone.now()
     clusters = LogicalCluster.objects.filter(pk__in=cluster_ids, reload_timestamp__lte=emmit_time)
     return VarnishCluster().load_vcl(start_processing_time, clusters)
+
 
 class VarnishCluster(object):
 
@@ -56,7 +57,7 @@ class VarnishCluster(object):
                 cluster.reload_timestamp = start_processing_time
                 cluster.save()
         except VclLoadException as e:
-            error_timestamp = datetime.datetime.now()
+            error_timestamp = timezone.now()
             self.logger.error('Loading error: {} - rendered vcl-s not used'.format(e))
             for cluster in clusters:
                 cluster.error_timestamp = error_timestamp
